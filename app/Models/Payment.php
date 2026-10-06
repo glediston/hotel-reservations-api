@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
-    protected $fillable = ['reserve_id', 'method', 'value'];
+
+public const METHODS = [1 => 'dinheiro', 2 => 'pix', 3 => 'cartão'];       
+
+protected $fillable = ['reserve_id', 'method', 'value'];
 
 protected function casts(): array
 {
