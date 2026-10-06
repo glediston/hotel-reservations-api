@@ -60,6 +60,7 @@ class RoomController extends Controller
         path: '/rooms',
         summary: 'Cadastra um quarto',
         tags: ['Quartos'],
+        security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -137,6 +138,7 @@ class RoomController extends Controller
         summary: 'Atualiza o nome de um quarto',
         description: 'Apenas o nome pode ser alterado. O nome deve ser único dentro do hotel.',
         tags: ['Quartos'],
+        security: [['bearerAuth' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',
@@ -192,6 +194,7 @@ class RoomController extends Controller
         summary: 'Exclui um quarto',
         description: 'Quartos que possuem reservas não podem ser excluídos.',
         tags: ['Quartos'],
+        security: [['bearerAuth' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',

@@ -20,6 +20,7 @@ class ReserveController extends Controller
             .'O pagamento é opcional e pode ser parcial, mas não pode ultrapassar o total. '
             .'Formas de pagamento: 1 = dinheiro, 2 = pix, 3 = cartão.',
         tags: ['Reservas'],
+        security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -100,6 +101,7 @@ class ReserveController extends Controller
         summary: 'Detalha uma reserva',
         description: 'Retorna hóspedes, diárias, pagamentos, saldo e status de pagamento.',
         tags: ['Reservas'],
+        security: [['bearerAuth' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',

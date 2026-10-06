@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Hotel Reservations API",
-        "description": "API REST para gestão de hotéis, quartos e reservas (desafio técnico Foco Multimídia).",
+        "description": "API REST para gestão de hotéis, quartos e reservas (desafio técnico Foco Multimídia). A consulta de quartos é pública. Cadastro, edição e exclusão de quartos e todas as rotas de reservas exigem token: faça login em POST /login e use o botão Authorize.",
         "version": "1.0.0"
     },
     "servers": [
@@ -12,6 +12,107 @@
         }
     ],
     "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Autentica e devolve um token",
+                "description": "Limitado a 5 tentativas por minuto. No ambiente de desenvolvimento use admin@hotel.test / password.",
+                "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@hotel.test"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abc123..."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Credenciais inválidas."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "E-mail ou senha ausentes"
+                    },
+                    "429": {
+                        "description": "Muitas tentativas de login"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Revoga o token atual",
+                "operationId": "28d48c13fca984400ac8de99f54ee13a",
+                "responses": {
+                    "204": {
+                        "description": "Token revogado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/reserves": {
             "post": {
                 "tags": [
@@ -164,7 +265,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/reserves/{id}": {
@@ -217,7 +323,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/rooms": {
@@ -333,7 +444,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/rooms/{id}": {
@@ -473,7 +589,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -527,7 +648,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
@@ -685,9 +811,21 @@
                 },
                 "type": "object"
             }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Cole apenas o token devolvido pelo login (sem a palavra Bearer).",
+                "bearerFormat": "Sanctum",
+                "scheme": "bearer"
+            }
         }
     },
     "tags": [
+        {
+            "name": "Autenticação",
+            "description": "Login e logout"
+        },
         {
             "name": "Quartos",
             "description": "CRUD de quartos"
