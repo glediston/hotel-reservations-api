@@ -12,4 +12,6 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::apiResource('reserves', ReserveController::class)->only(['store', 'show']);
+Route::apiResource('reserves', ReserveController::class)
+    ->only(['store', 'show'])
+    ->parameters(['reserves' => 'reserve']);

@@ -28,9 +28,9 @@ class ReservationService
 
             // Conflito: começa antes do meu check-out E termina depois do meu check-in
             $conflict = Reserve::where('room_id', $room->id)
-                ->where('check_in', '<', $checkOut->toDateString())
-                ->where('check_out', '>', $checkIn->toDateString())
-                ->first();
+            ->whereDate('check_in', '<', $checkOut->toDateString())
+            ->whereDate('check_out', '>', $checkIn->toDateString())
+            ->first();
 
             if ($conflict) {
                 throw new RoomUnavailableException(sprintf(
