@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 use App\Models\Hotel;
 use App\Models\Room;
 use Carbon\Carbon;
@@ -19,6 +22,8 @@ class ReserveApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Sanctum::actingAs(User::factory()->create());
 
         $this->hotel = Hotel::create(['name' => 'Hotel Teste']);
         $this->room = Room::create(['hotel_id' => $this->hotel->id, 'name' => 'Quarto 1']);
