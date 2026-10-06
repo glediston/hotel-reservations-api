@@ -1,17 +1,21 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ReserveController;
+use App\Http\Controllers\Api\RoomController;
+use Illuminate\Support\Facades\Route;
 
-Route::apiResource('rooms', RoomController::class);
+// Públicas
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::apiResource('rooms', RoomController::class)->only(['index', 'show']);
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Exigem token
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
 
+    Route::apiResource('rooms', RoomController::class)->except(['index', 'show']);
 
-Route::apiResource('reserves', ReserveController::class)
-    ->only(['store', 'show'])
-    ->parameters(['reserves' => 'reserve']);
+    Route::apiResource('reserves', ReserveController::class)
+        ->only(['store', 'show'])
+        ->parameters(['reserves' => 'reserve']);
+});
