@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('reserve_id')->constrained()->cascadeOnDelete();
             $table->unsignedTinyInteger('method');
-        $table->decimal('value', 10, 2);
+            $table->decimal('value', 10, 2);
             $table->timestamps();
         });
     }

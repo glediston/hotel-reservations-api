@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Hotel extends Model
 {
-      protected $fillable = ['external_id', 'name'];
+    protected $fillable = ['external_id', 'name'];
 
     public function rooms(): HasMany
     {

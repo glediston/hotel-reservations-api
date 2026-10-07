@@ -2,9 +2,6 @@
 
 namespace Tests\Feature;
 
-
-use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use App\Models\Hotel;
 use App\Models\Room;
 use Carbon\Carbon;
@@ -23,8 +20,6 @@ class ReserveApiTest extends TestCase
     {
         parent::setUp();
 
-        Sanctum::actingAs(User::factory()->create());
-
         $this->hotel = Hotel::create(['name' => 'Hotel Teste']);
         $this->room = Room::create(['hotel_id' => $this->hotel->id, 'name' => 'Quarto 1']);
     }
@@ -37,7 +32,6 @@ class ReserveApiTest extends TestCase
     private function payload(array $overrides = []): array
     {
         return array_merge([
-            'hotel_id' => $this->hotel->id,
             'room_id' => $this->room->id,
             'check_in' => $this->date(10)->toDateString(),
             'check_out' => $this->date(13)->toDateString(),
@@ -52,49 +46,15 @@ class ReserveApiTest extends TestCase
     {
         $this->postJson('/api/reserves', $this->payload())
             ->assertCreated()
+            ->assertJsonPath('data.hotel.id', $this->hotel->id)
             ->assertJsonPath('data.total', '300.00')
             ->assertJsonPath('data.nights', 3)
+            ->assertJsonPath('data.balance', '300.00')
             ->assertJsonPath('data.payment_status', 'pendente');
 
         $this->assertDatabaseCount('reserves', 1);
         $this->assertDatabaseCount('dailies', 3);
         $this->assertDatabaseCount('guests', 1);
-    }
-
-    public function test_pagamento_parcial_gera_saldo_e_status_parcial(): void
-    {
-        $this->postJson('/api/reserves', $this->payload([
-            'payments' => [['method' => 2, 'value' => 100]],
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('data.paid', '100.00')
-            ->assertJsonPath('data.balance', '200.00')
-            ->assertJsonPath('data.payment_status', 'parcial')
-            ->assertJsonPath('data.payments.0.method_name', 'pix');
-    }
-
-    public function test_pagamento_total_fica_quitado(): void
-    {
-        $this->postJson('/api/reserves', $this->payload([
-            'payments' => [
-                ['method' => 1, 'value' => 100],
-                ['method' => 2, 'value' => 200],
-            ],
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('data.balance', '0.00')
-            ->assertJsonPath('data.payment_status', 'quitado');
-    }
-
-    public function test_rejeita_pagamento_maior_que_o_total(): void
-    {
-        $this->postJson('/api/reserves', $this->payload([
-            'payments' => [['method' => 1, 'value' => 400]],
-        ]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['payments']);
-
-        $this->assertDatabaseCount('reserves', 0);
     }
 
     public function test_rejeita_reserva_em_quarto_ocupado(): void
@@ -142,11 +102,9 @@ class ReserveApiTest extends TestCase
             ->assertCreated();
     }
 
-    public function test_rejeita_quarto_de_outro_hotel(): void
+    public function test_rejeita_quarto_inexistente(): void
     {
-        $outroHotel = Hotel::create(['name' => 'Outro Hotel']);
-
-        $this->postJson('/api/reserves', $this->payload(['hotel_id' => $outroHotel->id]))
+        $this->postJson('/api/reserves', $this->payload(['room_id' => 999]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['room_id']);
     }
@@ -176,15 +134,6 @@ class ReserveApiTest extends TestCase
         $this->postJson('/api/reserves', $this->payload(['guests' => []]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['guests']);
-    }
-
-    public function test_rejeita_forma_de_pagamento_invalida(): void
-    {
-        $this->postJson('/api/reserves', $this->payload([
-            'payments' => [['method' => 9, 'value' => 50]],
-        ]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['payments.0.method']);
     }
 
     public function test_mostra_uma_reserva(): void

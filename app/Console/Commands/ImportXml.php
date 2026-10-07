@@ -127,7 +127,7 @@ class ImportXml extends Command
                     ]);
                 }
 
-                $sumCents = 0;
+                $sum = 0;
 
                 foreach ($node->xpath('Dailies/Daily') ?: [] as $daily) {
                     $date = (string) $daily->Date;
@@ -143,10 +143,10 @@ class ImportXml extends Command
                         'value' => (string) $daily->Value,
                     ]);
 
-                    $sumCents += (int) round(((float) $daily->Value) * 100);
+                    $sum += (float) $daily->Value;
                 }
 
-                if ($sumCents !== (int) round(((float) $node->Total) * 100)) {
+                if (round($sum, 2) != round((float) $node->Total, 2)) {
                     $this->skip("Reserva $id: soma das diárias difere do total informado");
                 }
 

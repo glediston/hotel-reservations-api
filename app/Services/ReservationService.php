@@ -7,32 +7,28 @@ use App\Models\Reserve;
 use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class ReservationService
 {
     public function create(array $data): Reserve
     {
+        // Transação: se algo der errado no meio, nada é gravado
         return DB::transaction(function () use ($data) {
-            // Trava o quarto: duas requisições simultâneas ficam em fila
-            $room = Room::whereKey($data['room_id'])->lockForUpdate()->firstOrFail();
+            // Trava o quarto até o fim da transação: duas reservas ao mesmo tempo ficam em fila
+            $room = Room::lockForUpdate()->findOrFail($data['room_id']);
 
-            if ((int) $room->hotel_id !== (int) $data['hotel_id']) {
-                throw ValidationException::withMessages([
-                    'room_id' => 'O quarto informado não pertence ao hotel escolhido.',
-                ]);
-            }
+            $checkIn = Carbon::parse($data['check_in']);
+            $checkOut = Carbon::parse($data['check_out']);
 
-            $checkIn = Carbon::parse($data['check_in'])->startOfDay();
-            $checkOut = Carbon::parse($data['check_out'])->startOfDay();
-
-            // Conflito: começa antes do meu check-out E termina depois do meu check-in
-            $conflict = Reserve::where('room_id', $room->id)
-            ->whereDate('check_in', '<', $checkOut->toDateString())
-            ->whereDate('check_out', '>', $checkIn->toDateString())
-            ->first();
+            // Conflito: outra reserva que começa antes do meu check-out e termina depois do meu check-in
+            $conflict = $room->reserves()
+                ->whereDate('check_in', '<', $checkOut)
+                ->whereDate('check_out', '>', $checkIn)
+                ->first();
 
             if ($conflict) {
+                // Essa exceção vira uma resposta 409 com a mensagem abaixo
                 throw new RoomUnavailableException(sprintf(
                     'Este quarto já está reservado de %s a %s.',
                     $conflict->check_in->format('d/m/Y'),
@@ -40,33 +36,11 @@ class ReservationService
                 ));
             }
 
-            // Dinheiro em centavos (inteiros), para evitar erro de arredondamento
-            $dailyCents = (int) round($data['daily_value'] * 100);
+            // Uma diária por noite (o dia do check-out não conta)
             $dailies = [];
 
             for ($day = $checkIn->copy(); $day < $checkOut; $day->addDay()) {
-                $dailies[] = [
-                    'date' => $day->toDateString(),
-                    'value' => $this->money($dailyCents),
-                ];
-            }
-
-            $totalCents = $dailyCents * count($dailies);
-
-            $payments = $data['payments'] ?? [];
-            $paidCents = array_sum(array_map(
-                fn (array $p) => (int) round($p['value'] * 100),
-                $payments,
-            ));
-
-            if ($paidCents > $totalCents) {
-                throw ValidationException::withMessages([
-                    'payments' => sprintf(
-                        'O valor pago (R$ %s) é maior que o total da reserva (R$ %s).',
-                        number_format($paidCents / 100, 2, ',', '.'),
-                        number_format($totalCents / 100, 2, ',', '.'),
-                    ),
-                ]);
+                $dailies[] = ['date' => $day->toDateString(), 'value' => $data['daily_value']];
             }
 
             $reserve = Reserve::create([
@@ -74,22 +48,15 @@ class ReservationService
                 'room_id' => $room->id,
                 'check_in' => $checkIn->toDateString(),
                 'check_out' => $checkOut->toDateString(),
-                'total' => $this->money($totalCents),
+                'total' => round($data['daily_value'] * count($dailies), 2),
             ]);
 
             $reserve->guests()->createMany($data['guests']);
             $reserve->dailies()->createMany($dailies);
 
-            if ($payments !== []) {
-                $reserve->payments()->createMany($payments);
-            }
+            Log::info("Reserva {$reserve->id} criada para o quarto {$room->id}.");
 
-            return $reserve->load(['hotel', 'room', 'guests', 'dailies', 'payments']);
+            return $reserve;
         });
-    }
-
-    private function money(int $cents): string
-    {
-        return number_format($cents / 100, 2, '.', '');
     }
 }

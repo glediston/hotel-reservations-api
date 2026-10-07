@@ -7,18 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
+    public const METHODS = [1 => 'dinheiro', 2 => 'pix', 3 => 'cartão'];
 
-public const METHODS = [1 => 'dinheiro', 2 => 'pix', 3 => 'cartão'];       
+    protected $fillable = ['reserve_id', 'method', 'value'];
 
-protected $fillable = ['reserve_id', 'method', 'value'];
+    protected function casts(): array
+    {
+        return ['value' => 'decimal:2'];
+    }
 
-protected function casts(): array
-{
-    return ['value' => 'decimal:2'];
-}
-
-public function reserve(): BelongsTo
-{
-    return $this->belongsTo(Reserve::class);
-}
+    public function reserve(): BelongsTo
+    {
+        return $this->belongsTo(Reserve::class);
+    }
 }
