@@ -1,12 +1,6 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
-
-
+// Importa os XMLs todo dia às 02:00 (no Docker, o serviço "scheduler" executa isso)
 Schedule::command('import:xml')->dailyAt('02:00')->withoutOverlapping();

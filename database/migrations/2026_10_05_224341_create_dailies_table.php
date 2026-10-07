@@ -18,7 +18,6 @@ return new class extends Migration
             $table->decimal('value', 10, 2);
             $table->timestamps();
 
-        
             $table->unique(['reserve_id', 'date']);
         });
     }

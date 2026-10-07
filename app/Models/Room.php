@@ -10,14 +10,13 @@ class Room extends Model
 {
     protected $fillable = ['external_id', 'hotel_id', 'name'];
 
-public function hotel(): BelongsTo
-{
-    return $this->belongsTo(Hotel::class);
-}
+    public function hotel(): BelongsTo
+    {
+        return $this->belongsTo(Hotel::class);
+    }
 
-public function reserves(): HasMany
-{
-    return $this->hasMany(Reserve::class);
-}
-    
+    public function reserves(): HasMany
+    {
+        return $this->hasMany(Reserve::class);
+    }
 }

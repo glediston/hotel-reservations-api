@@ -2,9 +2,6 @@
 
 namespace Tests\Feature;
 
-
-use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use App\Models\Hotel;
 use App\Models\Reserve;
 use App\Models\Room;
@@ -14,13 +11,6 @@ use Tests\TestCase;
 class RoomApiTest extends TestCase
 {
     use RefreshDatabase;
-
-        protected function setUp(): void
-    {
-        parent::setUp();
-
-        Sanctum::actingAs(User::factory()->create());
-    }
 
     private function hotel(string $name = 'Hotel Teste'): Hotel
     {

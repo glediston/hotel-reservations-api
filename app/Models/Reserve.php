@@ -46,4 +46,29 @@ class Reserve extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    // Quanto já foi pago (soma dos pagamentos)
+    public function paid(): float
+    {
+        return round($this->payments->sum('value'), 2);
+    }
+
+    // Quanto ainda falta pagar
+    public function balance(): float
+    {
+        return round($this->total - $this->paid(), 2);
+    }
+
+    public function paymentStatus(): string
+    {
+        if ($this->paid() == 0) {
+            return 'pendente';
+        }
+
+        if ($this->balance() > 0) {
+            return 'parcial';
+        }
+
+        return 'quitado';
+    }
 }

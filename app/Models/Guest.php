@@ -9,8 +9,8 @@ class Guest extends Model
 {
     protected $fillable = ['reserve_id', 'name', 'last_name', 'phone'];
 
-public function reserve(): BelongsTo
-{
-    return $this->belongsTo(Reserve::class);
-}
+    public function reserve(): BelongsTo
+    {
+        return $this->belongsTo(Reserve::class);
+    }
 }

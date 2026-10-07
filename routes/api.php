@@ -1,21 +1,14 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReserveController;
 use App\Http\Controllers\Api\RoomController;
 use Illuminate\Support\Facades\Route;
 
-// Públicas
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-Route::apiResource('rooms', RoomController::class)->only(['index', 'show']);
+Route::apiResource('rooms', RoomController::class);
 
-// Exigem token
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+Route::post('/reserves', [ReserveController::class, 'store']);
+Route::get('/reserves/{reserve}', [ReserveController::class, 'show']);
 
-    Route::apiResource('rooms', RoomController::class)->except(['index', 'show']);
-
-    Route::apiResource('reserves', ReserveController::class)
-        ->only(['store', 'show'])
-        ->parameters(['reserves' => 'reserve']);
-});
+Route::post('/reserves/{reserve}/payments', [PaymentController::class, 'store']);
+Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);

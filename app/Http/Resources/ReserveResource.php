@@ -12,10 +12,6 @@ class ReserveResource extends JsonResource
     {
         $this->resource->loadMissing(['hotel', 'room', 'guests', 'dailies', 'payments']);
 
-        $totalCents = (int) round($this->total * 100);
-        $paidCents = (int) $this->payments->sum(fn ($p) => (int) round($p->value * 100));
-        $balanceCents = $totalCents - $paidCents;
-
         return [
             'id' => $this->id,
             'hotel' => ['id' => $this->hotel->id, 'name' => $this->hotel->name],
@@ -23,28 +19,26 @@ class ReserveResource extends JsonResource
             'check_in' => $this->check_in->toDateString(),
             'check_out' => $this->check_out->toDateString(),
             'nights' => $this->dailies->count(),
-            'total' => number_format($totalCents / 100, 2, '.', ''),
-            'paid' => number_format($paidCents / 100, 2, '.', ''),
-            'balance' => number_format($balanceCents / 100, 2, '.', ''),
-            'payment_status' => match (true) {
-                $paidCents === 0 => 'pendente',
-                $balanceCents > 0 => 'parcial',
-                default => 'quitado',
-            },
-            'guests' => $this->guests->map(fn ($g) => [
-                'name' => $g->name,
-                'last_name' => $g->last_name,
-                'phone' => $g->phone,
-            ])->values(),
-            'dailies' => $this->dailies->map(fn ($d) => [
-                'date' => $d->date->toDateString(),
-                'value' => $d->value,
-            ])->values(),
-            'payments' => $this->payments->map(fn ($p) => [
-                'method' => $p->method,
-                'method_name' => Payment::METHODS[$p->method] ?? null,
-                'value' => $p->value,
-            ])->values(),
+            'total' => $this->total,
+            'paid' => number_format($this->paid(), 2, '.', ''),
+            'balance' => number_format($this->balance(), 2, '.', ''),
+            'payment_status' => $this->paymentStatus(),
+            'guests' => $this->guests->map(fn ($guest) => [
+                'name' => $guest->name,
+                'last_name' => $guest->last_name,
+                'phone' => $guest->phone,
+            ]),
+            'dailies' => $this->dailies->map(fn ($daily) => [
+                'date' => $daily->date->toDateString(),
+                'value' => $daily->value,
+            ]),
+            'payments' => $this->payments->map(fn ($payment) => [
+                'id' => $payment->id,
+                'method' => $payment->method,
+                'method_name' => Payment::METHODS[$payment->method] ?? null,
+                'value' => $payment->value,
+                'paid_at' => $payment->created_at,
+            ]),
         ];
     }
 }
